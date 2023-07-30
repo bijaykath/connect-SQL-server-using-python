@@ -1,0 +1,16 @@
+
+Imports: The necessary libraries are imported, including numpy, pandas, seaborn, and matplotlib.pyplot, among others.
+
+SQL Server Connection: The script connects to the SQL Server database using the pyodbc library. It connects to the server named 'DESKTOP-0QEG7F0' and the database named 'COVID'. It uses trusted authentication to connect (Trusted_Connection=yes).
+
+SQL Query: The script executes an SQL query to retrieve all columns from the table [COVID].[dbo].[CovidDeath]. The SQL query is stored in the query variable.
+
+Reading Data into Pandas DataFrame: The SQL query results are read into a pandas DataFrame named df_covid_data using the pd.read_sql function.
+
+Closing Connection: The connection to the SQL Server is closed to free up resources.
+
+Assigning DataFrame: The DataFrame df_covid_data is assigned to a new variable df.
+
+Plotting: A bar plot is created using Seaborn's sns.barplot function. The plot shows the total number of cases (total_cases) for each continent (continent).
+
+Annotating the Bars: Text labels displaying the exact value of each bar are added to the top of the bars using a loop.
