@@ -1,0 +1,149 @@
+
+import pyodbc
+import pandasql as ps
+import sqlalchemy
+from pandasql import sqldf
+from glob import glob
+import pandas as pd
+import os
+
+#Import data from file BFS Weekly Active Employee Roster 8-1-2022
+df_8_1_2022 = pd.read_excel(r'\\*\*.xlsx'
+                             , sheet_name = '8-1-2022')
+#fileName1 = os.path.basename('\\*\*.xlsx')
+
+#file1 = fileName1.split('.')[0][-9:]
+df_8_1_2022['weekdate'] = '2022-08-01'
+df= df_8_1_2022[['weekdate','Site','Location Name','Employee#','Emp Status','Region','Division','Market','Area']]
+df_8_1_2022= df.rename(columns = {'Location Name': 'Location_Name','Employee#':'Employee_Number','Emp Status':'Emp_Status'})
+
+# Set up dB Engine for import
+
+import urllib
+
+params = urllib.parse.quote_plus("DRIVER={ODBC Driver 17 for SQL Server};"                                 
+                                  "SERVER=sqledwrpt;"
+                                  "DATABASE=DM_Finance;"
+                                  "Trusted_Connection=yes")
+
+dbEngine = sqlalchemy.create_engine("mssql+pyodbc:///?odbc_connect={}".format(params))
+
+# Test connection
+try:
+    with dbEngine.connect() as con:
+        con.execute("SELECT 1")
+    print('engine is valid')
+except Exception as e:
+    print(f'Engine invalid: {str(e)}')
+	
+# Create table in SQL using Python
+import pyodbc
+cnxn = pyodbc.connect(
+     Trusted_Connection= 'Yes',
+     Driver="{ODBC Driver 13 for SQL Server}",
+     Server = "sqledwrpt",
+     Database = "DM_Finance"
+     )
+cursor = cnxn.cursor()
+cursor.execute('''CREATE TABLE fin_wr_weekly_headcount2(
+                    weekdate VARCHAR(100),
+                    Site VARCHAR(100), 
+                    Location_Name VARCHAR(100), 
+                    Employee_Number int, 
+                    Emp_Status VARCHAR(100), 
+                    Region VARCHAR(100), 
+                    Division VARCHAR(100), 
+                    Market VARCHAR(100), 
+                    Area VARCHAR(100) NULL              
+                   )
+                ''')
+cnxn.commit()
+#cnxn.close()
+
+Append_1 = df_8_1_2022.fillna(value=0)
+
+#Import data from Weekly Active Employee Roster 7-25-2022
+df_7_25_2022 = pd.read_excel(r'\\*\*.xlsx'
+                             , sheet_name = '7-25-2022')
+#fileName1 = os.path.basename('\\*\*.xlsx')
+
+#file1 = fileName1.split('.')[0][-9:]
+df_7_25_2022['weekdate'] = '2022-07-25'
+df= df_7_25_2022[['weekdate','Site','Location Name','Employee#','Emp Status','Region','Division','Market','Area']]
+df_7_25_2022= df.rename(columns = {'Location Name': 'Location_Name','Employee#':'Employee_Number','Emp Status':'Emp_Status'})
+
+# appending the xls data to SQL database
+df_7_25_2022.to_sql('fin_wr_weekly_headcount2',dbEngine, if_exists ='append', index = False)
+
+path_dir = 'C:\BFS\Assignment\Head_Count\BFS*'
+
+# Read all files of the directory
+files = glob(path_dir)
+
+# Concat all files of directory to one file
+data = pd.concat((pd.read_excel(file) for file in files), ignore_index = True, axis = 0)
+
+# Set up dB Engine for import
+
+import urllib
+
+params = urllib.parse.quote_plus("DRIVER={ODBC Driver 17 for SQL Server};"                                 
+                                  "SERVER=sqledwrpt;"
+                                  "DATABASE=DM_Finance;"
+                                  "Trusted_Connection=yes")
+
+dbEngine = sqlalchemy.create_engine("mssql+pyodbc:///?odbc_connect={}".format(params))
+
+# Test connection
+try:
+    with dbEngine.connect() as con:
+        con.execute("SELECT 1")
+    print('engine is valid')
+except Exception as e:
+    print(f'Engine invalid: {str(e)}')
+
+# Create table in SQL using Python
+import pyodbc
+cnxn = pyodbc.connect(
+     Trusted_Connection= 'Yes',
+     Driver="{ODBC Driver 13 for SQL Server}",
+     Server = "sqledwrpt",
+     Database = "DM_Finance"
+     )
+cursor = cnxn.cursor()
+cursor.execute('''CREATE TABLE fin_wr_weekly_headcount1(
+                    weekdate VARCHAR(100),
+                    Site VARCHAR(100), 
+                    Location_Name VARCHAR(100), 
+                    Employee_Number int, 
+                    Emp_Status VARCHAR(100), 
+                    Region VARCHAR(100), 
+                    Division VARCHAR(100), 
+                    Market VARCHAR(100), 
+                    Area VARCHAR(100) NULL              
+                   )
+                ''')
+cnxn.commit()
+#cnxn.close()
+
+Append_1 = df1.fillna(value=0)
+
+# Insert data into above created table
+for row in Append_1.itertuples():
+    cursor.execute('''
+                   INSERT INTO fin_wr_weekly_headcount1
+                   (weekdate, Site, Location_Name, Employee_Number, Emp_Status, Region,
+                    Division, Market, Area)
+                    VALUES(?,?,?,?,?,?,?,?,?)
+                    ''',
+                   row.weekdate,
+                   row.Site, 
+                   row.Location_Name,
+                   row.Employee_Number,
+                   row.Emp_Status,
+                   row.Region,
+                   row.Division,
+                   row.Market,
+                   row.Area 
+                   )
+cnxn.commit()	
